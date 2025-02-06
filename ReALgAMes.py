@@ -56,6 +56,32 @@ def draw_gradient_background(surface, top_COLOUR, bottom_COLOUR):
         ]
         pygame.draw.line(surface, COLOUR, (0, y), (surface.get_width(), y))
 
+def show_intro_screen():
+    intro_text = FONT2.render("This may be an old version of the game.", True, LABEL_COLOUR)
+    intro_text2 = FONT2.render("If so, click here to get the latest version:", True, LABEL_COLOUR)
+    intro_text3 = FONT2.render("https://code-318.github.io/WorldsSecondHardest/Game.html", True, LABEL_COLOUR)
+    press_key_text = FONT2.render("Press any key to start!", True, LABEL_COLOUR)
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                running = False
+                return  # Exit the intro screen
+        
+        screen.fill(BLACK)
+        screen.blit(intro_text, (100, 200))
+        screen.blit(intro_text2, (100, 250))
+        screen.blit(intro_text3, (100, 300))
+        screen.blit(press_key_text, (250, 450))
+        
+        pygame.display.flip()
+        clock.tick(60)
+
+show_intro_screen()
 
 running = True
 while running:
