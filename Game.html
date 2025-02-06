@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download Python File</title>
+</head>
+<body>
+  <button id="downloadButton">Download Python File</button>
+
+  <script>
+    document.getElementById('downloadButton').addEventListener('click', function() {
+      // URL of the .py file on the server
+      const fileUrl = 'ReALgAMes.py';  // Replace with the correct path
+
+      // Create an anchor element to trigger the download
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = 'WorldsSecondHardestGame.py';  // You can set a custom filename here
+
+      // Programmatically click the link
+      link.click();
+    });
+  </script>
+</body>
+</html>
