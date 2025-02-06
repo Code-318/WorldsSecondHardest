@@ -1,5 +1,6 @@
 import pygame
 import sys
+import webbrowser
 
 pygame.init()
 
@@ -12,6 +13,7 @@ COIN_COLOUR = (255, 223, 0)
 FONT = pygame.font.Font(None, 36)
 FONT2 = pygame.font.Font(None, 60)
 FONT3 = pygame.font.Font(None, 160)
+FONT4 = pygame.font.Font(None, 40)
 LABEL_COLOUR = (255, 255, 255)
 GROUND_COLOUR = (87, 153, 6)
 BLACK = (0,0,0)
@@ -57,9 +59,9 @@ def draw_gradient_background(surface, top_COLOUR, bottom_COLOUR):
         pygame.draw.line(surface, COLOUR, (0, y), (surface.get_width(), y))
 
 def show_intro_screen():
-    intro_text = FONT2.render("This may be an old version of the game.", True, LABEL_COLOUR)
-    intro_text2 = FONT2.render("If so, click here to get the latest version:", True, LABEL_COLOUR)
-    intro_text3 = FONT2.render("https://code-318.github.io/WorldsSecondHardest/Game.html", True, LABEL_COLOUR)
+    intro_text = FONT4.render("This may be an old version of the game.", True, LABEL_COLOUR)
+    intro_text2 = FONT4.render("If so, click here to get the latest version:", True, LABEL_COLOUR)
+    intro_text3 = FONT.render("https://code-318.github.io/WorldsSecondHardest/Game.html", True, LABEL_COLOUR)
     press_key_text = FONT2.render("Press any key to start!", True, LABEL_COLOUR)
     
     running = True
@@ -71,11 +73,18 @@ def show_intro_screen():
             if event.type == pygame.KEYDOWN:
                 running = False
                 return  # Exit the intro screen
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # Detect click on the link area (simple click detection based on position)
+                if 100 <= pygame.mouse.get_pos()[0] <= 700 and 300 <= pygame.mouse.get_pos()[1] <= 320:
+                    webbrowser.open("https://code-318.github.io/WorldsSecondHardest/Game.html")
+                    running = False
+                    return  # Exit the intro screen
         
         screen.fill(BLACK)
-        screen.blit(intro_text, (100, 200))
-        screen.blit(intro_text2, (100, 250))
-        screen.blit(intro_text3, (100, 300))
+        screen.blit(intro_text, (150, 200))
+        screen.blit(intro_text2, (150, 250))
+        screen.blit(intro_text3, (45, 300))
         screen.blit(press_key_text, (250, 450))
         
         pygame.display.flip()
