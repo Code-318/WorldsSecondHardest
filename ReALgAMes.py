@@ -20,8 +20,8 @@ SPIKE_COLOUR = (255,0,0)
 player = pygame.Rect(5, 525, 50, 50)
 player_speed = 5
 
-level = 7
-coins = 6
+level = 1
+coins = 0
 coin_collected = False
 
 islands = [
