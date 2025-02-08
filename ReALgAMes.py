@@ -82,10 +82,10 @@ def show_intro_screen():
                     return  # Exit the intro screen
         
         screen.fill(BLACK)
-        screen.blit(intro_text, (150, 200))
-        screen.blit(intro_text2, (150, 250))
+        screen.blit(intro_text, (135, 200))
+        screen.blit(intro_text2, (135, 250))
         screen.blit(intro_text3, (45, 300))
-        screen.blit(press_key_text, (250, 450))
+        screen.blit(press_key_text, (180, 450))
         
         pygame.display.flip()
         clock.tick(60)
