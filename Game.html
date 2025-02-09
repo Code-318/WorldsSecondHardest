@@ -82,9 +82,10 @@
     <h1>World's Second Hardest Game</h1>
     <p>Download the Python file to experience the game!</p>
     <button id="downloadButton">Download Python File</button>
-    <p style="margin-bottom: 0px;">Edition 3</p>
+    <p style="margin-bottom: 0px;">Edition 4</p>
   </div>
-
+<h1>-Update Log-</h1>
+<p>Edition 4: Finished Tutorial Levels, Added Lv9 and Added a temporary End-Screen</p>
   <script>
     document.getElementById('downloadButton').addEventListener('click', function() {
       // URL of the .py file on the server
@@ -93,7 +94,7 @@
       // Create an anchor element to trigger the download
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = 'WSHG-Edition3.py';  // You can set a custom filename here
+      link.download = 'WSHG-Edition4.py';  // You can set a custom filename here
 
       // Programmatically click the link
       link.click();
