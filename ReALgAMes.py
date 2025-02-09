@@ -89,6 +89,38 @@ def show_intro_screen():
         
         pygame.display.flip()
         clock.tick(60)
+def show_end_screen():
+    end_text = FONT4.render("You have completed the whole game (For Now)", True, LABEL_COLOUR)
+    end_text2 = FONT4.render("Make Sure To Download Latest Verion:", True, LABEL_COLOUR)
+    end_text3 = FONT.render("https://code-318.github.io/WorldsSecondHardest/Game.html", True, LABEL_COLOUR)
+    press_key_text = FONT2.render("(This Is Edition 4)", True, LABEL_COLOUR)
+    
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                running = False
+                return  # Exit the intro screen
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # Detect click on the link area (simple click detection based on position)
+                if 100 <= pygame.mouse.get_pos()[0] <= 700 and 300 <= pygame.mouse.get_pos()[1] <= 320:
+                    webbrowser.open("https://code-318.github.io/WorldsSecondHardest/Game.html")
+                    running = False
+                    return  # Exit the intro screen
+        
+        screen.fill(BLACK)
+        screen.blit(end_text, (80, 150))
+        screen.blit(end_text2, (135, 250))
+        screen.blit(end_text3, (45, 300))
+        screen.blit(press_key_text, (225, 450))
+        
+        pygame.display.flip()
+        clock.tick(60)
 
 show_intro_screen()
 
@@ -100,14 +132,14 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_UP] and jump_allowed:
+    if (keys[pygame.K_UP] or keys[pygame.K_w]) and jump_allowed:
         jump_power = -20
         gravity = True
         jump_allowed = False
 
-    if keys[pygame.K_LEFT] and player.x > 5:
+    if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and player.x > 5:
         player.x -= player_speed
-    if keys[pygame.K_RIGHT]:
+    if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
         player.x += player_speed
     
     if player.x > 800 and coins == level:
@@ -181,18 +213,36 @@ while running:
             pygame.Rect(540, 560, 40, 10),
         ]
     if level == 7:
-        coin = pygame.Rect(30, 30, 30, 30),
+        coin = pygame.Rect(30, 30, 30, 30)
         platform2_x = (platform_x * -1) + 600
         islands = [
             pygame.Rect(670, 200, 150, 20),
             pygame.Rect(platform_x, 400, 150, 20),
-            pygame.Rect(platform2_x, 100, 150, 20)
+            pygame.Rect(platform2_x, 100, 150, 20),
+            pygame.Rect(180, 50, 25, 80),
         ]
         spikes = [
             pygame.Rect(130, 555, 575, 30),
             pygame.Rect(400, 300, 40, 300),
             pygame.Rect(400, -249, 40, 300)
         ]
+    if level == 8:
+        coin = pygame.Rect(765, 520, 30, 30)
+        islands = [
+            pygame.Rect(0, 0, 50, 500),
+            pygame.Rect(250, 70, 50, 500)
+        ]
+        spikes = [
+            pygame.Rect(245, 420, 5, 150),
+            pygame.Rect(50, 270, 5, 150),
+            pygame.Rect(245, 150, 5, 150),
+            pygame.Rect(50, 0, 5, 150),
+            pygame.Rect(300, 565, 250, 50),
+            pygame.Rect(610, 565, 140, 50),
+        ]
+    if level == 9:
+        running = False
+        show_end_screen()
     if player.colliderect(coin):
         if not coin_collected:
             coins += 1
@@ -202,8 +252,12 @@ while running:
         if player.colliderect(island):
             if player.x < island.x:
                 player.x -= 5
+                if player.y + player.height <= island.y + island.height and level >= 7:
+                    jump_allowed = True
             elif player.x > island.x - island.width:
                 player.x += 5
+                if player.y + player.height <= island.y + island.height and level >= 7:
+                    jump_allowed = True
 
     if gravity:
         player.y += jump_power
@@ -250,7 +304,6 @@ while running:
         pygame.draw.rect(screen, PLATFORM_COLOUR, island)
     for spike in spikes:
         pygame.draw.rect(screen, SPIKE_COLOUR, spike)
-    
     if not loop_done:
         platform_x += 2
         if platform_x >= 600:
@@ -282,9 +335,9 @@ while running:
     elif level == 4:
         tutorial_label3 = FONT2.render("Use an Air Jump", True, LABEL_COLOUR)
         screen.blit(tutorial_label3, (247, 40))
-        
     pygame.display.flip()
     clock.tick(60)
 
 pygame.quit()
 sys.exit()
+
