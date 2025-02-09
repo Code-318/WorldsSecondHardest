@@ -189,7 +189,7 @@ while running:
             pygame.Rect(platform2_x, 100, 150, 20)
         ]
         spikes = [
-            pygame.Rect(150, 555, 575, 30),
+            pygame.Rect(130, 555, 575, 30),
             pygame.Rect(400, 300, 40, 300),
             pygame.Rect(400, -249, 40, 300)
         ]
