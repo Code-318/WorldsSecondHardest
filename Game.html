@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>World's Second Hardest Game - Download Python File</title>
@@ -75,6 +74,28 @@
       outline: none;
       box-shadow: 0 0 10px rgba(255, 165, 0, 0.8);
     }
+
+    /* Update log styling */
+    .update-log {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 2px solid #ccc;
+      text-align: left;
+    }
+
+    .update-log h2 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .update-log p {
+      font-size: 16px;
+      color: #555;
+      text-align: center;
+    }
+
   </style>
 </head>
 <body>
@@ -82,10 +103,17 @@
     <h1>World's Second Hardest Game</h1>
     <p>Download the Python file to experience the game!</p>
     <button id="downloadButton">Download Python File</button>
-    <p style="margin-bottom: 0px;">Edition 4</p>
+    <p style="margin-bottom: 20px;">Edition 4</p>
+
+    <!-- Update Log -->
+    <div class="update-log">
+      <h2>Update Log</h2>
+      <p><strong>Edition 4:</strong> Finished Tutorial Levels, Added Lv9, and Added a temporary End-Screen<br>
+<strong>Edition 3-1:</strong> Added levels 1-7 (Tutorial Levels)
+</p>
+    </div>
   </div>
-<h1>-Update Log-</h1>
-<p>Edition 4: Finished Tutorial Levels, Added Lv9 and Added a temporary End-Screen</p>
+
   <script>
     document.getElementById('downloadButton').addEventListener('click', function() {
       // URL of the .py file on the server
@@ -100,5 +128,6 @@
       link.click();
     });
   </script>
-</body>
-</html>
+
+
+</body></html>
