@@ -24,8 +24,8 @@ TURRET_COLOR = (100,100,100)
 player = pygame.Rect(5, 525, 50, 50)
 player_speed = 5
 
-level = 11
-coins = 10
+level = 1
+coins = 0
 deaths = 0
 coin_collected = False
 
