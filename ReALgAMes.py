@@ -24,8 +24,8 @@ TURRET_COLOR = (100,100,100)
 player = pygame.Rect(5, 525, 50, 50)
 player_speed = 5
 
-level = 10
-coins = 9
+level = 11
+coins = 10
 deaths = 0
 coin_collected = False
 
@@ -141,7 +141,7 @@ def show_end_screen():
     end_text = FONT4.render("You have completed the whole game (For Now)", True, LABEL_COLOUR)
     end_text2 = FONT4.render("Make Sure To Download Latest Verion:", True, LABEL_COLOUR)
     end_text3 = FONT.render("https://code-318.github.io/WorldsSecondHardest/Game.html", True, LABEL_COLOUR)
-    press_key_text = FONT2.render("(This Is Edition 5)", True, LABEL_COLOUR)
+    press_key_text = FONT2.render("(This Is Edition 6)", True, LABEL_COLOUR)
     
 
     running = True
@@ -337,6 +337,25 @@ while running:
             pygame.Rect(380, 15, 40, 20),
         ]
     if level == 11:
+        coin = pygame.Rect(600, 10, 30, 30)
+        islands = [
+            pygame.Rect(0, 400, 50, 50),
+            pygame.Rect(0, 250, 50, 50),
+            pygame.Rect(0, 100, 50, 50),
+            pygame.Rect(350, 400, 40, 170)
+        ]
+        spikes = [
+            pygame.Rect(150, 100, 30, 470)
+        ]
+        turrets = [
+            pygame.Rect(30, 415, 40, 20),
+            pygame.Rect(30, 265, 40, 20),
+            pygame.Rect(30, 115, 40, 20),
+            pygame.Rect(782, 415, 40, 20),
+            pygame.Rect(782, 265, 40, 20),
+            pygame.Rect(782, 115, 40, 20)
+        ]
+    if level == 12:
         running = False
         show_end_screen()
     if player.colliderect(coin):
