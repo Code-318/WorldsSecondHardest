@@ -2,6 +2,7 @@ import pygame
 import sys
 import webbrowser
 import math
+import random
 
 pygame.init()
 
@@ -20,14 +21,17 @@ GROUND_COLOUR = (87, 153, 6)
 BLACK = (0,0,0)
 SPIKE_COLOUR = (255,0,0)
 TURRET_COLOR = (100,100,100)
+ORANGE = (247, 121, 2)
+FLAME_COLORS = [(255, 69, 0), (255, 140, 0), (255, 215, 0), (255, 165, 0)]
 
 player = pygame.Rect(5, 525, 50, 50)
 player_speed = 5
 
-level = 1
-coins = 0
+level = 13
+coins = 12
 deaths = 0
 coin_collected = False
+portal_on = False
 
 islands = [
     pygame.Rect(200, 390, 150, 20),
@@ -39,8 +43,14 @@ platforms = []
 spikes = []
 turrets = []
 bullets = []
+flames = []
 bullet_timer = 0  # Cooldown timer for shooting
 bullet_interval = 60
+Tick = 0
+Spike_On = True
+
+jetpack = False
+jetpack_fuel = 10
 
 turret_img = pygame.Surface((40, 20), pygame.SRCALPHA)  # Transparent surface
 turret_img.fill(TURRET_COLOR)  # Set turret color
@@ -91,6 +101,39 @@ def draw_turret(x, y, angle):
     
     pygame.draw.circle(screen, (80,80,80), (x, y), base_radius)
 
+def draw_character(jetpack):
+    if jetpack:
+        pygame.draw.rect(screen, PLAYER_COLOUR, player)
+        pygame.draw.rect(screen, (60,60,60), pygame.Rect(player.x - 10, player.y, 10, 40))
+    else:
+        pygame.draw.rect(screen, PLAYER_COLOUR, player)
+ 
+def spawn_flame(x, y):
+    """Creates a small rectangle representing a flame particle."""
+    flame = {
+        "x": x,
+        "y": y,
+        "width": random.randint(5, 10),
+        "height": random.randint(10, 20),
+        "color": random.choice(FLAME_COLORS),
+        "speed": random.uniform(2, 5)
+    }
+    flames.append(flame)
+
+def update_flames():
+    """Move and remove old flames."""
+    for flame in flames[:]:
+        flame["y"] += flame["speed"]  # Move flames upward
+        flame["x"] += random.uniform(-1, 1)  # Slight left/right movement
+        flame["height"] -= 0.5  # Shrink the flame
+        if flame["height"] <= 0:  # Remove when too small
+            flames.remove(flame)
+
+def draw_flames():
+    """Draw flames on the screen."""
+    for flame in flames:
+        pygame.draw.rect(screen, flame["color"], (flame["x"], flame["y"], flame["width"], flame["height"]))    
+          
 def get_angle(target, source):
     dx = target.x - source.x
     dy = target.y - source.y
@@ -141,7 +184,7 @@ def show_end_screen():
     end_text = FONT4.render("You have completed the whole game (For Now)", True, LABEL_COLOUR)
     end_text2 = FONT4.render("Make Sure To Download Latest Verion:", True, LABEL_COLOUR)
     end_text3 = FONT.render("https://code-318.github.io/WorldsSecondHardest/Game.html", True, LABEL_COLOUR)
-    press_key_text = FONT2.render("(This Is Edition 6)", True, LABEL_COLOUR)
+    press_key_text = FONT2.render("(This Is Edition 7)", True, LABEL_COLOUR)
     
 
     running = True
@@ -150,9 +193,6 @@ def show_end_screen():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN:
-                running = False
-                return  # Exit the intro screen
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Detect click on the link area (simple click detection based on position)
@@ -180,10 +220,20 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    if (keys[pygame.K_UP] or keys[pygame.K_w]) and jump_allowed:
-        jump_power = -20
-        gravity = True
-        jump_allowed = False
+    if (keys[pygame.K_UP] or keys[pygame.K_w]):
+        if jetpack and jetpack_fuel > 0.5:
+                jump_power = - 7
+                gravity = True
+                jetpack_fuel -= 0.1
+                for _ in range(3):  # Increase for more flames
+                    spawn_flame(player.x, player.y + 20)
+        elif jump_allowed:
+            jump_power = -20
+            gravity = True
+            jump_allowed = False
+    else:
+            if jetpack_fuel < 10:
+                jetpack_fuel += 0.03
 
     if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and player.x > 5:
         player.x -= player_speed
@@ -207,6 +257,7 @@ while running:
             player.x = 5
             player.y = 525
             deaths += 1
+            jetpack_fuel = 10
             if coin_collected:
                 coins -= 1
                 coin_collected = False
@@ -216,6 +267,10 @@ while running:
             player.x, player.y = 5, 525  # Reset player position
             deaths += 1
             bullets.clear()
+            jetpack_fuel = 10
+            if coin_collected:
+                coins -= 1
+                coin_collected = False
         for island in islands:
             if island.colliderect(pygame.Rect(bullet.x, bullet.y, bullet.width, bullet.height)):
                 bullets.remove(bullet)
@@ -356,6 +411,59 @@ while running:
             pygame.Rect(782, 115, 40, 20)
         ]
     if level == 12:
+        coin = pygame.Rect(600, 10, 30, 30)
+        islands = [
+            pygame.Rect(0, 400, 6, 100),
+            pygame.Rect(100, 70, 50, 50),
+            pygame.Rect(460, 250, 50, 50),
+        ]
+        spikes = []
+        turrets = [
+            pygame.Rect(105, 110, 40, 20),
+            pygame.Rect(465, 290, 40, 20),
+        ]
+        if Spike_On:
+            spikes = [
+                pygame.Rect(150, 70, 650, 30)
+            ]
+        Tick += 1
+        if Tick >= 100:
+            if Spike_On:
+                Spike_On = False
+            else:
+                Spike_On = True
+            Tick = 0
+            
+    if level == 13:
+        coin = pygame.Rect(400, 10, 30, 30)
+        spikes =[]
+        islands = []
+        turrets = []
+        if not jetpack:
+            portal = pygame.Rect(700, 460, 60, 100)
+            portal_on = True
+            if player.colliderect(portal):
+                level = 1727
+    if level == 1727:
+        spikes =[]
+        islands = [
+            pygame.Rect(350, 400, 40, 170)
+        ]
+        turrets = [
+        ]
+        coin = pygame.Rect(-500, 10, 30, 30)
+        if not jetpack:
+            portal_on = False
+        jetpack_placeholder = pygame.Rect(700, 100, 10, 40)
+        if player.colliderect(jetpack_placeholder):
+            jetpack = True
+            portal_on = True
+        if portal_on:
+            portal = pygame.Rect(700, 460, 60, 100)
+            if player.colliderect(portal):
+                level = 13
+                portal_on = False
+    if level == 14:
         running = False
         show_end_screen()
     if player.colliderect(coin):
@@ -444,14 +552,24 @@ while running:
     else:
         arrow_label = FONT3.render("-->", True, BLACK)
         screen.blit(arrow_label, (620, 400))
+        
+    if jetpack:
+        pygame.draw.rect(screen, ORANGE, (640, 10, jetpack_fuel * 15, 20))
+
+        # Update and draw flames
+        update_flames()
+        draw_flames()
+    
     pygame.draw.rect(screen, GROUND_COLOUR, ground)
-    pygame.draw.rect(screen, PLAYER_COLOUR, player)
+
+    
+    draw_character(jetpack)
     
     level_label = FONT.render(f"Level: {level}", True, LABEL_COLOUR)
     coins_label = FONT.render(f"Coins: {coins}", True, LABEL_COLOUR)
     # Display the labels in the top-left corner
     screen.blit(level_label, (10, 10))  # Draw "Level" at (10, 10)
-    screen.blit(coins_label, (10, 50))  # Draw "Coins" at (10, 50)   
+    screen.blit(coins_label, (10, 50))  # Draw "Coins" at (10, 50)
     
     if level == 1:
         tutorial_label1 = FONT2.render("Collect The Coin", True, LABEL_COLOUR)
@@ -462,8 +580,22 @@ while running:
     elif level == 4:
         tutorial_label3 = FONT2.render("Use an Air Jump", True, LABEL_COLOUR)
         screen.blit(tutorial_label3, (247, 40))
+    elif level == 1727:
+        tutorial_label4 = FONT2.render("Is that a Jetpack??", True, LABEL_COLOUR)
+        screen.blit(tutorial_label4, (220, 40))
+        if not jetpack:
+            pygame.draw.rect(screen, (60,60,60), jetpack_placeholder)
+            for _ in range(3):  # Increase for more flames
+                spawn_flame(702, 135)
+            update_flames()
+            draw_flames()
+    if portal_on:
+        pygame.draw.rect(screen, (0, 100, 255), portal, border_radius=10)
+        pygame.draw.rect(screen, (0, 150, 255), portal.inflate(10, 10), 5, border_radius=15)
+    
     pygame.display.flip()
     clock.tick(60)
 
 pygame.quit()
 sys.exit()
+
