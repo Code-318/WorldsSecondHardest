@@ -27,8 +27,8 @@ FLAME_COLORS = [(255, 69, 0), (255, 140, 0), (255, 215, 0), (255, 165, 0)]
 player = pygame.Rect(5, 525, 50, 50)
 player_speed = 5
 
-level = 13
-coins = 12
+level = 1
+coins = 0
 deaths = 0
 coin_collected = False
 portal_on = False
@@ -450,6 +450,12 @@ while running:
             pygame.Rect(350, 400, 40, 170)
         ]
         turrets = [
+            pygame.Rect(30, 415, 40, 20),
+            pygame.Rect(30, 265, 40, 20),
+            pygame.Rect(30, 115, 40, 20),
+            pygame.Rect(782, 415, 40, 20),
+            pygame.Rect(782, 265, 40, 20),
+            pygame.Rect(782, 115, 40, 20)
         ]
         coin = pygame.Rect(-500, 10, 30, 30)
         if not jetpack:
