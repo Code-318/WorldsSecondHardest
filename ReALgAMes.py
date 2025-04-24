@@ -33,11 +33,11 @@ CENTRE = 400
 player = pygame.Rect(5, 525, 50, 50)
 player_speed = 5
 
-level = 8
-level_unlocks = 7
+level = 1
+level_unlocks = 0
 deaths = 0
 level_unlock_collected = False
-coins = 25
+coins = 0
 portal_on = False
 
 islands = [
@@ -74,8 +74,8 @@ gravity = False
 jump_allowed = True
 ground_y = 525
 angle = 0
-timeControl = True
-timePower = 40
+timeControl = False
+timePower = 30
 
 player_name = ""
 
@@ -420,6 +420,7 @@ while running:
         player.x = -20
         level += 1
         level_unlock_collected = False
+        coins += 1
     
     bullet_timer += 1
     if bullet_timer >= bullet_interval:
@@ -780,3 +781,4 @@ while running:
 save_user_data()
 pygame.quit()
 sys.exit()
+
