@@ -3,6 +3,8 @@ import sys
 import webbrowser
 import math
 import random
+import json
+import os
 
 pygame.init()
 
@@ -19,18 +21,23 @@ FONT4 = pygame.font.Font(None, 40)
 LABEL_COLOUR = (255, 255, 255)
 GROUND_COLOUR = (87, 153, 6)
 BLACK = (0,0,0)
+WHITE = (255,255,255)
 SPIKE_COLOUR = (255,0,0)
 TURRET_COLOR = (100,100,100)
 ORANGE = (247, 121, 2)
 FLAME_COLORS = [(255, 69, 0), (255, 140, 0), (255, 215, 0), (255, 165, 0)]
+link_color = (0, 200, 255)
+TITLE_COLOUR = (26, 208, 232)
+CENTRE = 400
 
 player = pygame.Rect(5, 525, 50, 50)
 player_speed = 5
 
-level = 1
-coins = 0
+level = 8
+level_unlocks = 7
 deaths = 0
-coin_collected = False
+level_unlock_collected = False
+coins = 25
 portal_on = False
 
 islands = [
@@ -58,7 +65,7 @@ turret_img.fill(TURRET_COLOR)  # Set turret color
 loop_done = True
 platform_x = 100
 
-coin = pygame.Rect(660, 150, 30, 30)
+level_unlock = pygame.Rect(660, 150, 30, 30)
 
 ground = pygame.Rect(0, 570, 800, 30)
 
@@ -66,6 +73,11 @@ jump_power = 0
 gravity = False
 jump_allowed = True
 ground_y = 525
+angle = 0
+timeControl = True
+timePower = 40
+
+player_name = ""
 
 clock = pygame.time.Clock()
 
@@ -88,6 +100,82 @@ class Bullet:
 
     def off_screen(self):
         return self.x < 0 or self.x > 800 or self.y < 0 or self.y > 600
+
+def get_user_data_path(username):
+    return f"{username}_data.json"
+
+def user_exists(username):
+    return os.path.exists(get_user_data_path(username))
+
+def register_user(username):
+    data = {
+        "level_unlocks": 0,
+        "coins": 0,
+        "deaths": 0,
+        "level": 1,
+        "jetpack": False,
+        "time": False,
+        "fuel": 10
+    }
+    with open(get_user_data_path(username), "w") as f:
+        json.dump(data, f)
+
+def load_user_data(username):
+    global level_unlocks, deaths, level, jetpack, jetpack_fuel
+    with open(get_user_data_path(username), "r") as f:
+        data = json.load(f)
+        level_unlocks = data.get("level_unlocks", 0)
+        coins = data.get("coins", 0)
+        deaths = data.get("deaths", 0)
+        level = data.get("level", 1)
+        jetpack = data.get("jetpack", False)
+        timeControl = data.get("time", False)
+        jetpack_fuel = data.get("fuel", 10)
+
+def save_user_data():
+    if player_name:
+        data = {
+            "level_unlocks": level_unlocks,
+            "coins": coins,
+            "deaths": deaths,
+            "level": level,
+            "jetpack": jetpack,
+            "time": timeControl,
+            "fuel": jetpack_fuel
+        }
+        with open(get_user_data_path(player_name), "w") as f:
+            json.dump(data, f)
+
+def login_screen():
+    global player_name
+    input_active = True
+    user_input = ""
+    prompt = "Enter Username:"
+
+    while input_active:
+        screen.fill((20, 20, 20))
+        draw_text(prompt, FONT, LABEL_COLOUR, 400, 200)
+        draw_text(user_input, FONT, LABEL_COLOUR, 400, 250)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                save_user_data()
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if not user_exists(user_input):
+                        register_user(user_input)
+                    load_user_data(user_input)
+                    player_name = user_input
+                    input_active = False
+                elif event.key == pygame.K_BACKSPACE:
+                    user_input = user_input[:-1]
+                else:
+                    user_input += event.unicode
+
+        pygame.display.flip()
+        clock.tick(30)
 
 def draw_turret(x, y, angle):
     base_radius = 15
@@ -149,48 +237,132 @@ def draw_gradient_background(surface, top_COLOUR, bottom_COLOUR):
         ]
         pygame.draw.line(surface, COLOUR, (0, y), (surface.get_width(), y))
 
+def shop_screen():
+    global timeControl, coins, jetpack
+    running = True
+    font = pygame.font.Font(None, 36)
+    title_font = pygame.font.Font(None, 64)
+
+    # Items for sale
+    items = [
+        {"name": "Time Control Orb", "price": 10, "key": "1"},
+        {"name": "Jetpack", "price": 15, "key": "2"}
+    ]
+
+    while running:
+        screen.fill((30, 30, 30))
+
+        # Draw title
+        title_text = title_font.render("Item Shop", True, (255, 255, 255))
+        screen.blit(title_text, (screen.get_width() // 2 - title_text.get_width() // 2, 50))
+
+        # Display items
+        for index, item in enumerate(items):
+            y_pos = 150 + index * 80
+            item_text = font.render(
+                f"[{item['key']}] {item['name']} - {item['price']} coins", True, (255, 255, 255)
+            )
+            screen.blit(item_text, (100, y_pos))
+
+        # Exit instruction
+        exit_text = font.render("Press [ESC] to return", True, (200, 200, 200))
+        screen.blit(exit_text, (100, screen.get_height() - 60))
+
+        pygame.display.flip()
+
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+                elif event.key == pygame.K_1 and not timeControl and coins >= 10:
+                    timeControl = True
+                    coins -= 10
+                elif event.key == pygame.K_2 and not jetpack and coins >= 15:
+                    jetpack = True
+                    coins -= 15
+
 def show_intro_screen():
-    intro_text = FONT4.render("This may be an old version of the game.", True, LABEL_COLOUR)
-    intro_text2 = FONT4.render("If so, click here to get the latest version:", True, LABEL_COLOUR)
-    intro_text3 = FONT.render("https://code-318.github.io/WorldsSecondHardest/Game.html", True, LABEL_COLOUR)
-    press_key_text = FONT2.render("Press any key to start!", True, LABEL_COLOUR)
+    intro_text1 = FONT.render("(Edition 9)", True, LABEL_COLOUR)
+    intro_text2 = FONT4.render("This may be an outdated version", True, LABEL_COLOUR)
+    intro_text3 = FONT.render("Click Here For Website", True, COIN_COLOUR)
+    press_key_text = FONT2.render("Press enter key to start!", True, LABEL_COLOUR)
+    
+    angle = 0
+    title_surface = FONT3.render("WSHG", True, PLAYER_COLOUR)
     
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                save_user_data()
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 running = False
                 return  # Exit the intro screen
-
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Detect click on the link area (simple click detection based on position)
                 if 100 <= pygame.mouse.get_pos()[0] <= 700 and 300 <= pygame.mouse.get_pos()[1] <= 320:
                     webbrowser.open("https://code-318.github.io/WorldsSecondHardest/Game.html")
                     running = False
                     return  # Exit the intro screen
+                elif login_button.collidepoint(mouse_x, mouse_y):
+                    login_screen()
+                elif shop_button.collidepoint(mouse_x, mouse_y):
+                    shop_screen()
+                
+        rotated_title = pygame.transform.rotate(title_surface, math.sin(angle * 0.1) * 5)
+        draw_gradient_background(screen, (50, 100, 200), (133, 180, 220))
+        pygame.draw.rect(screen, GROUND_COLOUR, ground)
+        screen.blit(rotated_title, (220, 30))
+        screen.blit(intro_text1, (340, 190))
+        screen.blit(intro_text2, (180, 250))
+        screen.blit(intro_text3, (270, 290))
+        screen.blit(press_key_text, (175, 470))
+        angle += 1
         
-        screen.fill(BLACK)
-        screen.blit(intro_text, (135, 200))
-        screen.blit(intro_text2, (135, 250))
-        screen.blit(intro_text3, (45, 300))
-        screen.blit(press_key_text, (180, 450))
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        
+
+        login_button = pygame.Rect(150, 360, 200, 50)
+        shop_button = pygame.Rect(450, 360, 200, 50)
+        color = PLAYER_COLOUR if login_button.collidepoint(mouse_x, mouse_y) else WHITE
+        color2 = PLAYER_COLOUR if shop_button.collidepoint(mouse_x, mouse_y) else WHITE
+        pygame.draw.rect(screen, color, login_button)
+        pygame.draw.rect(screen, color2, shop_button)
+        draw_text("Login", FONT, BLACK, login_button.centerx, login_button.centery)
+        draw_text("Shop", FONT, BLACK, shop_button.centerx, shop_button.centery)
         
         pygame.display.flip()
         clock.tick(60)
+
+def draw_text(text, font, color, x, y, centered=True):
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect()
+    if centered:
+        text_rect.center = (x, y)
+    else:
+        text_rect.topleft = (x, y)
+    screen.blit(text_surface, text_rect)
+
 def show_end_screen():
     end_text = FONT4.render("You have completed the whole game (For Now)", True, LABEL_COLOUR)
     end_text2 = FONT4.render("Make Sure To Download Latest Verion:", True, LABEL_COLOUR)
     end_text3 = FONT.render("https://code-318.github.io/WorldsSecondHardest/Game.html", True, LABEL_COLOUR)
-    press_key_text = FONT2.render("(This Is Edition 7)", True, LABEL_COLOUR)
+    press_key_text = FONT2.render("(This Is Edition 9)", True, LABEL_COLOUR)
     
 
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                save_user_data()
                 pygame.quit()
                 sys.exit()
 
@@ -216,6 +388,7 @@ running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            save_user_data()
             running = False
 
     keys = pygame.key.get_pressed()
@@ -239,11 +412,14 @@ while running:
         player.x -= player_speed
     if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
         player.x += player_speed
-    
-    if player.x > 800 and coins == level:
+    if (keys[pygame.K_t] and timeControl):
+        ticks = timePower
+    else:
+        ticks = 60
+    if player.x > 800 and level_unlocks == level:
         player.x = -20
         level += 1
-        coin_collected = False
+        level_unlock_collected = False
     
     bullet_timer += 1
     if bullet_timer >= bullet_interval:
@@ -258,9 +434,9 @@ while running:
             player.y = 525
             deaths += 1
             jetpack_fuel = 10
-            if coin_collected:
-                coins -= 1
-                coin_collected = False
+            if level_unlock_collected:
+                level_unlocks -= 1
+                level_unlock_collected = False
     
     for bullet in bullets[:]:
         if player.collidepoint(bullet.x, bullet.y):
@@ -268,22 +444,22 @@ while running:
             deaths += 1
             bullets.clear()
             jetpack_fuel = 10
-            if coin_collected:
-                coins -= 1
-                coin_collected = False
+            if level_unlock_collected:
+                level_unlocks -= 1
+                level_unlock_collected = False
         for island in islands:
             if island.colliderect(pygame.Rect(bullet.x, bullet.y, bullet.width, bullet.height)):
                 bullets.remove(bullet)
             
     if level == 2:
-        coin = pygame.Rect(555, 115, 30, 30)
+        level_unlock = pygame.Rect(555, 115, 30, 30)
         islands = [
             pygame.Rect(400, 490, 150, 20),
             pygame.Rect(200, 350, 150, 20),
             pygame.Rect(500, 150, 150, 20),
         ]
     if level == 3:
-        coin = pygame.Rect(660, 150, 30, 30)
+        level_unlock = pygame.Rect(660, 150, 30, 30)
         islands = [
             pygame.Rect(200, 390, 150, 20),
             pygame.Rect(0, 190, 150, 20),
@@ -296,7 +472,7 @@ while running:
             pygame.Rect(360, 50, 30, 50),
         ]
     if level == 4:
-        coin = pygame.Rect(700, 150, 30, 30)
+        level_unlock = pygame.Rect(700, 150, 30, 30)
         islands = [
             pygame.Rect(270, 210, 150, 20),
             
@@ -306,7 +482,7 @@ while running:
             pygame.Rect(720, 550, 50, 30)
         ]
     if level == 5:
-        coin = pygame.Rect(535, 150, 30, 30)
+        level_unlock = pygame.Rect(535, 150, 30, 30)
         islands = [
             pygame.Rect(0, 100, 150, 20),
             pygame.Rect(0, 220, 150, 20),
@@ -318,7 +494,7 @@ while running:
             pygame.Rect(580, 180, 40, 10)
         ]
     if level == 6:
-        coin = pygame.Rect(70, 215, 30, 30)
+        level_unlock = pygame.Rect(70, 215, 30, 30)
         islands = [
             pygame.Rect(10, 255, 150, 20),
             pygame.Rect(670, 400, 150, 20),
@@ -333,7 +509,7 @@ while running:
             pygame.Rect(540, 560, 40, 10),
         ]
     if level == 7:
-        coin = pygame.Rect(30, 30, 30, 30)
+        level_unlock = pygame.Rect(30, 30, 30, 30)
         platform2_x = (platform_x * -1) + 600
         islands = [
             pygame.Rect(670, 200, 150, 20),
@@ -347,7 +523,7 @@ while running:
             pygame.Rect(400, -249, 40, 300)
         ]
     if level == 8:
-        coin = pygame.Rect(765, 520, 30, 30)
+        level_unlock = pygame.Rect(765, 520, 30, 30)
         islands = [
             pygame.Rect(0, 0, 50, 500),
             pygame.Rect(250, 70, 50, 500)
@@ -361,7 +537,7 @@ while running:
             pygame.Rect(610, 565, 140, 50),
         ]
     if level == 9:
-        coin = pygame.Rect(750, 520, 30, 30)
+        level_unlock = pygame.Rect(750, 520, 30, 30)
         islands = [
             pygame.Rect(125, 0, 50, 200),
             pygame.Rect(375, 0, 50, 200),
@@ -380,7 +556,7 @@ while running:
             pygame.Rect(630, 190, 40, 20),  # Turret 3
         ]
     if level == 10:
-        coin = pygame.Rect(750, 520, 30, 30)
+        level_unlock = pygame.Rect(750, 520, 30, 30)
         islands = [
             pygame.Rect(375, 0, 50, 25),
             pygame.Rect(150, 320, 50, 250)
@@ -392,7 +568,7 @@ while running:
             pygame.Rect(380, 15, 40, 20),
         ]
     if level == 11:
-        coin = pygame.Rect(600, 10, 30, 30)
+        level_unlock = pygame.Rect(600, 10, 30, 30)
         islands = [
             pygame.Rect(0, 400, 50, 50),
             pygame.Rect(0, 250, 50, 50),
@@ -411,7 +587,7 @@ while running:
             pygame.Rect(782, 115, 40, 20)
         ]
     if level == 12:
-        coin = pygame.Rect(600, 10, 30, 30)
+        level_unlock = pygame.Rect(600, 10, 30, 30)
         islands = [
             pygame.Rect(0, 400, 6, 100),
             pygame.Rect(100, 70, 50, 50),
@@ -435,7 +611,7 @@ while running:
             Tick = 0
             
     if level == 13:
-        coin = pygame.Rect(400, 10, 30, 30)
+        level_unlock = pygame.Rect(400, 10, 30, 30)
         spikes =[]
         islands = []
         turrets = []
@@ -457,7 +633,7 @@ while running:
             pygame.Rect(782, 265, 40, 20),
             pygame.Rect(782, 115, 40, 20)
         ]
-        coin = pygame.Rect(-500, 10, 30, 30)
+        level_unlock = pygame.Rect(-500, 10, 30, 30)
         if not jetpack:
             portal_on = False
         jetpack_placeholder = pygame.Rect(700, 100, 10, 40)
@@ -472,10 +648,10 @@ while running:
     if level == 14:
         running = False
         show_end_screen()
-    if player.colliderect(coin):
-        if not coin_collected:
-            coins += 1
-        coin_collected = True
+    if player.colliderect(level_unlock):
+        if not level_unlock_collected:
+            level_unlocks += 1
+        level_unlock_collected = True
     
     for island in islands:
         if player.colliderect(island):
@@ -553,8 +729,8 @@ while running:
         platform_x -= 2
         if platform_x <= 0:
             loop_done = False
-    if not coin_collected:
-        pygame.draw.rect(screen, COIN_COLOUR, coin)
+    if not level_unlock_collected:
+        pygame.draw.rect(screen, COIN_COLOUR, level_unlock)
     else:
         arrow_label = FONT3.render("-->", True, BLACK)
         screen.blit(arrow_label, (620, 400))
@@ -572,13 +748,13 @@ while running:
     draw_character(jetpack)
     
     level_label = FONT.render(f"Level: {level}", True, LABEL_COLOUR)
-    coins_label = FONT.render(f"Coins: {coins}", True, LABEL_COLOUR)
+    coin_label = FONT.render(f"Coins: {coins}", True, LABEL_COLOUR)
     # Display the labels in the top-left corner
     screen.blit(level_label, (10, 10))  # Draw "Level" at (10, 10)
-    screen.blit(coins_label, (10, 50))  # Draw "Coins" at (10, 50)
+    screen.blit(coin_label, (10, 50))  # Draw "level_unlocks" at (10, 50)
     
     if level == 1:
-        tutorial_label1 = FONT2.render("Collect The Coin", True, LABEL_COLOUR)
+        tutorial_label1 = FONT2.render("Collect the Coins", True, LABEL_COLOUR)
         screen.blit(tutorial_label1, (240, 70))
     elif level ==3:
         tutorial_label2 = FONT2.render("Watch out for spikes!", True, LABEL_COLOUR)
@@ -600,8 +776,7 @@ while running:
         pygame.draw.rect(screen, (0, 150, 255), portal.inflate(10, 10), 5, border_radius=15)
     
     pygame.display.flip()
-    clock.tick(60)
-
+    clock.tick(ticks)
+save_user_data()
 pygame.quit()
 sys.exit()
-
