@@ -39,6 +39,9 @@ deaths = 0
 level_unlock_collected = False
 coins = 0
 portal_on = False
+Boss1X, Boss1Y, Bosss1X, Bosss1Y = 
+Boss2X, Boss2Y, Bosss2X, Bosss2Y = 
+Boss3X, Boss3Y, Bosss3X, Bosss3Y = 
 
 islands = [
     pygame.Rect(200, 390, 150, 20),
@@ -75,7 +78,7 @@ jump_allowed = True
 ground_y = 525
 angle = 0
 timeControl = False
-timePower = 30
+timePower = 40
 
 player_name = ""
 
@@ -245,8 +248,8 @@ def shop_screen():
 
     # Items for sale
     items = [
-        {"name": "Time Control Orb", "price": 10, "key": "1"},
-        {"name": "Jetpack", "price": 15, "key": "2"}
+        {"name": "Time Control Orb", "price": 10, "key": "1", "owned": lambda: timeControl},
+        {"name": "Jetpack", "price": 15, "key": "2", "owned": lambda: jetpack}
     ]
 
     while running:
@@ -254,13 +257,28 @@ def shop_screen():
 
         # Draw title
         title_text = title_font.render("Item Shop", True, (255, 255, 255))
-        screen.blit(title_text, (screen.get_width() // 2 - title_text.get_width() // 2, 50))
+        screen.blit(title_text, (screen.get_width() // 2 - title_text.get_width() // 2, 30))
+
+        # Display current coins
+        coins_text = font.render(f"Coins: {coins}", True, (255, 215, 0))
+        screen.blit(coins_text, (screen.get_width() - 200, 30))
 
         # Display items
         for index, item in enumerate(items):
-            y_pos = 150 + index * 80
+            y_pos = 150 + index * 100
+            # Determine item status
+            if item["owned"]():
+                status = "Owned"
+                color = (100, 255, 100)  # Green
+            elif coins < item["price"]:
+                status = "Can't afford"
+                color = (255, 100, 100)  # Red
+            else:
+                status = f"{item['price']} coins"
+                color = (255, 255, 255)  # White
+
             item_text = font.render(
-                f"[{item['key']}] {item['name']} - {item['price']} coins", True, (255, 255, 255)
+                f"[{item['key']}] {item['name']} - {status}", True, color
             )
             screen.blit(item_text, (100, y_pos))
 
@@ -280,68 +298,94 @@ def shop_screen():
                 if event.key == pygame.K_ESCAPE:
                     running = False
 
-                elif event.key == pygame.K_1 and not timeControl and coins >= 10:
-                    timeControl = True
-                    coins -= 10
-                elif event.key == pygame.K_2 and not jetpack and coins >= 15:
-                    jetpack = True
-                    coins -= 15
+                elif event.key == pygame.K_1:
+                    if not timeControl and coins >= 10:
+                        timeControl = True
+                        coins -= 10
+
+                elif event.key == pygame.K_2:
+                    if not jetpack and coins >= 15:
+                        jetpack = True
+                        coins -= 15
 
 def show_intro_screen():
+    global level
     intro_text1 = FONT.render("(Edition 9)", True, LABEL_COLOUR)
     intro_text2 = FONT4.render("This may be an outdated version", True, LABEL_COLOUR)
     intro_text3 = FONT.render("Click Here For Website", True, COIN_COLOUR)
-    press_key_text = FONT2.render("Press enter key to start!", True, LABEL_COLOUR)
-    
-    angle = 0
+    intro_text4 = FONT.render(f"Level Selected: {level}", True, LABEL_COLOUR)
     title_surface = FONT3.render("WSHG", True, PLAYER_COLOUR)
-    
+
+    # Create a rect for the website text (for accurate click detection)
+    website_rect = intro_text3.get_rect(topleft=(270, 250))
+
+    angle = 0
     running = True
+
     while running:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 save_user_data()
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                running = False
-                return  # Exit the intro screen
+
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # Detect click on the link area (simple click detection based on position)
-                if 100 <= pygame.mouse.get_pos()[0] <= 700 and 300 <= pygame.mouse.get_pos()[1] <= 320:
+                if website_rect.collidepoint((mouse_x, mouse_y)):
                     webbrowser.open("https://code-318.github.io/WorldsSecondHardest/Game.html")
                     running = False
                     return  # Exit the intro screen
-                elif login_button.collidepoint(mouse_x, mouse_y):
+                elif login_button.collidepoint((mouse_x, mouse_y)):
                     login_screen()
-                elif shop_button.collidepoint(mouse_x, mouse_y):
+                elif shop_button.collidepoint((mouse_x, mouse_y)):
                     shop_screen()
-                
+                elif start_button.collidepoint((mouse_x, mouse_y)):
+                    running = False
+                    return  # Exit the intro screen
+                elif levels_button.collidepoint((mouse_x, mouse_y)):
+                    levels_screen()
+                    # Refresh level text after selecting a level
+                    intro_text4 = FONT.render(f"Level Selected: {level}", True, LABEL_COLOUR)
+
+        # Drawing
         rotated_title = pygame.transform.rotate(title_surface, math.sin(angle * 0.1) * 5)
         draw_gradient_background(screen, (50, 100, 200), (133, 180, 220))
         pygame.draw.rect(screen, GROUND_COLOUR, ground)
-        screen.blit(rotated_title, (220, 30))
-        screen.blit(intro_text1, (340, 190))
-        screen.blit(intro_text2, (180, 250))
-        screen.blit(intro_text3, (270, 290))
-        screen.blit(press_key_text, (175, 470))
-        angle += 1
-        
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        
 
+        screen.blit(rotated_title, (220, 30))
+        screen.blit(intro_text1, (340, 160))
+        screen.blit(intro_text2, (180, 220))
+        screen.blit(intro_text3, website_rect.topleft)  # Use rect for consistent position
+        screen.blit(intro_text4, (290, 300))
+
+        angle += 1
+
+        # Draw Buttons
         login_button = pygame.Rect(150, 360, 200, 50)
         shop_button = pygame.Rect(450, 360, 200, 50)
-        color = PLAYER_COLOUR if login_button.collidepoint(mouse_x, mouse_y) else WHITE
-        color2 = PLAYER_COLOUR if shop_button.collidepoint(mouse_x, mouse_y) else WHITE
-        pygame.draw.rect(screen, color, login_button)
-        pygame.draw.rect(screen, color2, shop_button)
+        start_button = pygame.Rect(150, 430, 200, 50)
+        levels_button = pygame.Rect(450, 430, 200, 50)
+
+        # Change color if hovered
+        color_login = PLAYER_COLOUR if login_button.collidepoint((mouse_x, mouse_y)) else WHITE
+        color_shop = PLAYER_COLOUR if shop_button.collidepoint((mouse_x, mouse_y)) else WHITE
+        color_start = PLAYER_COLOUR if start_button.collidepoint((mouse_x, mouse_y)) else WHITE
+        color_levels = PLAYER_COLOUR if levels_button.collidepoint((mouse_x, mouse_y)) else WHITE
+
+        pygame.draw.rect(screen, color_login, login_button, border_radius=10)
+        pygame.draw.rect(screen, color_shop, shop_button, border_radius=10)
+        pygame.draw.rect(screen, color_start, start_button, border_radius=10)
+        pygame.draw.rect(screen, color_levels, levels_button, border_radius=10)
+
         draw_text("Login", FONT, BLACK, login_button.centerx, login_button.centery)
         draw_text("Shop", FONT, BLACK, shop_button.centerx, shop_button.centery)
-        
+        draw_text("Start", FONT, BLACK, start_button.centerx, start_button.centery)
+        draw_text("Levels", FONT, BLACK, levels_button.centerx, levels_button.centery)
+
         pygame.display.flip()
         clock.tick(60)
-
+        
 def draw_text(text, font, color, x, y, centered=True):
     text_surface = font.render(text, True, color)
     text_rect = text_surface.get_rect()
@@ -350,6 +394,88 @@ def draw_text(text, font, color, x, y, centered=True):
     else:
         text_rect.topleft = (x, y)
     screen.blit(text_surface, text_rect)
+
+def levels_screen():
+    global level, level_unlocks
+    running = True
+    font = pygame.font.Font(None, 36)
+    title_font = pygame.font.Font(None, 64)
+
+    # Button setup
+    buttons = []
+    button_width = 120
+    button_height = 50
+    padding = 20
+
+    # Create button rects for levels 1-13
+    for i in range(1, 14):
+        x_pos = 100 + ((i - 1) % 4) * (button_width + padding)
+        y_pos = 150 + ((i - 1) // 4) * (button_height + padding)
+        rect = pygame.Rect(x_pos, y_pos, button_width, button_height)
+        buttons.append((i, rect))
+
+    while running:
+        screen.fill((20, 20, 20))
+
+        # Draw title
+        title_text = title_font.render("Select Level", True, (255, 255, 255))
+        screen.blit(title_text, (screen.get_width() // 2 - title_text.get_width() // 2, 30))
+
+        # Draw buttons
+        mouse_pos = pygame.mouse.get_pos()
+
+        for i, rect in buttons:
+            # Check if level is unlocked
+            unlocked = i <= level_unlocks + 1
+
+            # Color based on state
+            if unlocked:
+                base_color = (70, 130, 180)  # Steel blue
+                hover_color = (100, 160, 210)
+            else:
+                base_color = (80, 80, 80)  # Locked: dark grey
+                hover_color = (120, 120, 120)
+
+            # Check if mouse is over
+            if rect.collidepoint(mouse_pos):
+                color = hover_color
+            else:
+                color = base_color
+
+            # Draw button
+            pygame.draw.rect(screen, color, rect, border_radius=10)
+
+            # Draw text
+            label = font.render(str(i), True, (255, 255, 255))
+            label_rect = label.get_rect(center=rect.center)
+            screen.blit(label, label_rect)
+
+        # Exit instruction
+        exit_text = font.render("Press [ESC] to return", True, (200, 200, 200))
+        screen.blit(exit_text, (100, screen.get_height() - 60))
+
+        pygame.display.flip()
+
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click
+                for i, rect in buttons:
+                    if rect.collidepoint(event.pos):
+                        if i <= level_unlocks + 1:
+                            level = i
+                            running = False  # Level selected
+                            
+                        else:
+                            # You could flash a "locked" message here if you want!
+                            pass
 
 def show_end_screen():
     end_text = FONT4.render("You have completed the whole game (For Now)", True, LABEL_COLOUR)
@@ -416,11 +542,16 @@ while running:
         ticks = timePower
     else:
         ticks = 60
+    if keys[pygame.K_m]:
+        show_intro_screen()
+        bullets.clear()
+        player.x = 5
+        player.y = 525
     if player.x > 800 and level_unlocks == level:
         player.x = -20
         level += 1
         level_unlock_collected = False
-        coins += 1
+        coins += 2
     
     bullet_timer += 1
     if bullet_timer >= bullet_interval:
@@ -612,41 +743,53 @@ while running:
             Tick = 0
             
     if level == 13:
-        level_unlock = pygame.Rect(400, 10, 30, 30)
         spikes =[]
-        islands = []
-        turrets = []
-        if not jetpack:
-            portal = pygame.Rect(700, 460, 60, 100)
-            portal_on = True
-            if player.colliderect(portal):
-                level = 1727
-    if level == 1727:
-        spikes =[]
+        level_unlock = pygame.Rect(700, 10, 30, 30)
         islands = [
             pygame.Rect(350, 400, 40, 170)
         ]
         turrets = [
-            pygame.Rect(30, 415, 40, 20),
-            pygame.Rect(30, 265, 40, 20),
-            pygame.Rect(30, 115, 40, 20),
+            pygame.Rect(-18, 415, 40, 20),
+            pygame.Rect(-18, 265, 40, 20),
+            pygame.Rect(-18, 115, 40, 20),
             pygame.Rect(782, 415, 40, 20),
             pygame.Rect(782, 265, 40, 20),
             pygame.Rect(782, 115, 40, 20)
         ]
-        level_unlock = pygame.Rect(-500, 10, 30, 30)
-        if not jetpack:
-            portal_on = False
-        jetpack_placeholder = pygame.Rect(700, 100, 10, 40)
-        if player.colliderect(jetpack_placeholder):
-            jetpack = True
+    if level == 14:
+        spikes = []
+        level_unlock = pygame.Rect(-600, 10, 30, 30)
+        islands = []
+        turrets = []
+        if level_unlocks == 13:
             portal_on = True
-        if portal_on:
             portal = pygame.Rect(700, 460, 60, 100)
             if player.colliderect(portal):
-                level = 13
-                portal_on = False
-    if level == 14:
+                level = 1723
+        else:
+            portal_on = False
+
+    if level == 1723:
+        spikes = []
+        level_unlock = pygame.Rect(600, 10, 30, 30)
+        islands = []
+        turrets = []
+
+        boss_center = (400, 150)  # Center of boss
+
+        # 4 boxes with different colors (mostly white)
+        BossPart1 = pygame.Rect(Boss1X, Boss1Y, Bosss1X, Bosss1Y)
+        BossPart2 = pygame.Rect(Boss2X, Boss2Y, Bosss2X, Bosss2Y) 
+        BossPart3 = pygame.Rect(Boss3X, Boss3Y, Bosss3X, Bosss3Y) 
+
+        boss_alive = True
+
+        if level_unlocks == 14:
+            portal_on = False
+        else:
+            portal_on = False
+
+    if level == 15:
         running = False
         show_end_screen()
     if player.colliderect(level_unlock):
@@ -721,7 +864,6 @@ while running:
         pygame.draw.rect(screen, PLATFORM_COLOUR, island)
     for spike in spikes:
         pygame.draw.rect(screen, SPIKE_COLOUR, spike)
-    
     if not loop_done:
         platform_x += 2
         if platform_x >= 600:
@@ -736,6 +878,7 @@ while running:
         arrow_label = FONT3.render("-->", True, BLACK)
         screen.blit(arrow_label, (620, 400))
         
+
     if jetpack:
         pygame.draw.rect(screen, ORANGE, (640, 10, jetpack_fuel * 15, 20))
 
@@ -763,22 +906,15 @@ while running:
     elif level == 4:
         tutorial_label3 = FONT2.render("Use an Air Jump", True, LABEL_COLOUR)
         screen.blit(tutorial_label3, (247, 40))
-    elif level == 1727:
-        tutorial_label4 = FONT2.render("Is that a Jetpack??", True, LABEL_COLOUR)
-        screen.blit(tutorial_label4, (220, 40))
-        if not jetpack:
-            pygame.draw.rect(screen, (60,60,60), jetpack_placeholder)
-            for _ in range(3):  # Increase for more flames
-                spawn_flame(702, 135)
-            update_flames()
-            draw_flames()
+    elif level == 14:
+        tutorial_label4 = FONT2.render("Get Ready For A Boss Fight.", True, LABEL_COLOUR)
+        screen.blit(tutorial_label4, (200, 40))
     if portal_on:
         pygame.draw.rect(screen, (0, 100, 255), portal, border_radius=10)
         pygame.draw.rect(screen, (0, 150, 255), portal.inflate(10, 10), 5, border_radius=15)
-    
+        
     pygame.display.flip()
     clock.tick(ticks)
 save_user_data()
 pygame.quit()
 sys.exit()
-
