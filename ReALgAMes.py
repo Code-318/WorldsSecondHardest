@@ -39,9 +39,6 @@ deaths = 0
 level_unlock_collected = False
 coins = 0
 portal_on = False
-Boss1X, Boss1Y, Bosss1X, Bosss1Y = 
-Boss2X, Boss2Y, Bosss2X, Bosss2Y = 
-Boss3X, Boss3Y, Bosss3X, Bosss3Y = 
 
 islands = [
     pygame.Rect(200, 390, 150, 20),
@@ -756,7 +753,7 @@ while running:
             pygame.Rect(782, 265, 40, 20),
             pygame.Rect(782, 115, 40, 20)
         ]
-    if level == 14:
+    if level == 16:
         spikes = []
         level_unlock = pygame.Rect(-600, 10, 30, 30)
         islands = []
@@ -789,7 +786,7 @@ while running:
         else:
             portal_on = False
 
-    if level == 15:
+    if level == 14:
         running = False
         show_end_screen()
     if player.colliderect(level_unlock):
@@ -906,9 +903,6 @@ while running:
     elif level == 4:
         tutorial_label3 = FONT2.render("Use an Air Jump", True, LABEL_COLOUR)
         screen.blit(tutorial_label3, (247, 40))
-    elif level == 14:
-        tutorial_label4 = FONT2.render("Get Ready For A Boss Fight.", True, LABEL_COLOUR)
-        screen.blit(tutorial_label4, (200, 40))
     if portal_on:
         pygame.draw.rect(screen, (0, 100, 255), portal, border_radius=10)
         pygame.draw.rect(screen, (0, 150, 255), portal.inflate(10, 10), 5, border_radius=15)
